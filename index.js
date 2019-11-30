@@ -27,29 +27,28 @@ module.exports = app => {
 
   // pull request
   app.on(['pull_request_review.submitted'], async context => {
-    let { payload: {review: {user:{login:reviewer}, state:act, body: comment, html_url: comment_url}, pull_request: {user: {login: author}, html_url: post_request_url}}} = context 
+    
+    let { github, payload: {review: {user:{login:reviewer}, state:act, body: comment, html_url: comment_url}, pull_request: {user: {login: author}, html_url: post_request_url, number: pull_number}, repository: {name: repo, owner: {login: owner}} }} = context 
     let recipient = await userByName(users[author])
     let reviewerSlack = await userByName(users[reviewer])
+    // Get PR title
+    let { data:{title:pr_title} } = await github.pulls.get({owner, repo, pull_number})
+
     const reploy = await slack.chat.postMessage({
-      text: msg,
       channel: recipient,
       unfurl_links: true,
-      blocks: [
+      attachments: [
         {
-          "type": "section",
-          "text": {
-            "type": "mrkdwn",
-            "text": `<@${reviewerSlack}> has ${act} on your <${post_request_url}|pull_request>`
-          } 
+          "text": `<@${reviewerSlack}> has ${act} on your <${post_request_url}|pull_request>`,
+          "color": "#42F56C"
         },
         {
-          "type": "section",
-          "text": {
-            "type": "mrkdwn",
-            "text": comment
-          }
+          "fallback": comment,
+          "title": pr_title,
+          "title_link": comment_url,
+          "text": comment,
+          "color": "#764FA5",
         }
-
       ]
     }); 
   })
