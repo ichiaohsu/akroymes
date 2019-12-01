@@ -28,7 +28,31 @@ module.exports = app => {
   // pull request
   app.on(['pull_request_review.submitted'], async context => {
     
-    let { github, payload: {review: {user:{login:reviewer}, state:act, body: comment, html_url: comment_url}, pull_request: {user: {login: author}, html_url: post_request_url, number: pull_number}, repository: {name: repo, owner: {login: owner}} }} = context 
+    let { 
+      github, 
+      payload: {
+        review: {
+          user:{
+            login:reviewer
+          }, 
+          state:act, 
+          body: comment, 
+          html_url: comment_url
+        }, 
+        pull_request: {
+          user: {
+            login: author
+          }, 
+          html_url: post_request_url, 
+          number: pull_number}, 
+          repository: {
+            name: repo, 
+            owner: {
+              login: owner
+            }
+          }
+        }
+      } = context 
     let recipient = await userByName(users[author])
     let reviewerSlack = await userByName(users[reviewer])
     // Get PR title
