@@ -9,7 +9,7 @@ const { WebClient } = require('@slack/web-api')
 const slackToken = process.env.SLACK_TOKEN;
 const slack = new WebClient(slackToken)
 
-// Search slack user id with user name
+// Search through Slack user list for Slack id with GitHub user name
 const userByName = async (name) => {
   let userId
   try {
@@ -44,8 +44,9 @@ module.exports = app => {
             login: author
           }, 
           html_url: post_request_url, 
-          number: pull_number}, 
-          repository: {
+          number: pull_number
+        }, 
+        repository: {
             name: repo, 
             owner: {
               login: owner
@@ -58,7 +59,7 @@ module.exports = app => {
     // Get PR title
     let { data:{title:pr_title} } = await github.pulls.get({owner, repo, pull_number})
 
-    const reploy = await slack.chat.postMessage({
+    await slack.chat.postMessage({
       channel: recipient,
       unfurl_links: true,
       attachments: [
@@ -74,6 +75,55 @@ module.exports = app => {
           "color": "#764FA5",
         }
       ]
-    }); 
+    })
+  })
+
+  app.on(['pull_request.review_requested'], async context => {
+    let {
+      payload: {
+        pull_request: {
+          user: {
+            login: author
+          },
+          title,
+          html_url: pullRequestUrl,
+          requested_reviewers,
+          body
+        },
+      }
+    } = context
+    
+    let slackAuthor = await userByName(users[author])
+    let slackReviewers = []
+    // Find slack id for all reviewers 
+    await Promise.all(
+      requested_reviewers.map(async (x) => { return userByName(users[x.login])} )
+    ).then((data) => {
+      slackReviewers.push(...data)
+    })
+    // Send messages using map
+    await Promise.all(
+      slackReviewers.map(async (recipient) => {
+        return slack.chat.postMessage({
+          channel: recipient,
+          unfurl_links: true,
+          attachments: [
+            {
+              "text": `<@${slackAuthor}> has request you as reviewer`,
+              "color": "#42F56C"
+            },
+            {
+              "fallback": body,
+              "title": title,
+              "title_link": pullRequestUrl,
+              "text": body,
+              "color": "#764FA5",
+            }
+          ]
+        }) 
+      })
+    ).then(() => {
+      app.log("send message to reviewers")
+    })
   })
 }
