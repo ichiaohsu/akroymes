@@ -25,6 +25,7 @@
     "probot": "^9.5.3"
   },
   "devDependencies": {
+    "acorn": "^7.1.0",
     "jest": "^24.9.0",
     "nock": "^11.4.0",
     "nodemon": "^1.19.4",

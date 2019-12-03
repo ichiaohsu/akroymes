@@ -1,4 +1,5 @@
-# permes
+# Akroymes
+[![Standard - JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com/)
 
 > A GitHub App built with [Probot](https://github.com/probot/probot) that A messenger bringing infos about pull request to contributors
 
